@@ -66,3 +66,22 @@ export const Button = styled.button`
     box-shadow: #000 0px 0px 0 0;
   }
 `
+
+export const RefreshButton = styled.button`
+  border: 0;
+  background-color: transparent;
+
+  &:hover {
+    animation: loading 0.5s linear;
+  }
+
+  @keyframes loading {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`

@@ -29,7 +29,7 @@ export const BoxFilterAndForm = styled.div`
 
   max-width: 300px;
 
-  max-height: 700px;
+  max-height: 750px;
 
   gap: 1rem;
 

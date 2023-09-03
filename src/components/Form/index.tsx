@@ -1,15 +1,16 @@
-import { Button, FormContainer, Input } from './styles'
+import { useState, useContext } from 'react'
+import { Button, FormContainer, Input, RefreshButton } from './styles'
 import { useForm } from 'react-hook-form'
 import z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { api } from '@/lib/axios'
-import { useContext } from 'react'
+
 import { EcommerceContext } from '../../context/EcommerceContext'
+import { RefreshCw } from 'lucide-react'
 
 const formValidationSchema = z.object({
   id: z
     .string()
-    .nonempty('Esse campo é obrigatorio')
     .min(1, 'Deve contér pelo menos 1 caracter')
     .refine((value) => /^\d+$/.test(value), {
       message: 'Somente números são permitidos neste campo',
@@ -18,8 +19,9 @@ const formValidationSchema = z.object({
   description: z.string().nonempty('Esse campo é obrigatorio').toLowerCase(),
   price: z
     .string()
-    .min(1, 'Deve contér pelo menos 1 caracter')
-    .max(3, 'Deve conter no maximo 3 caracteres')
+    // .min(1, 'Deve contér pelo menos 1 caracter')
+    // .max(3, 'Deve conter no maximo 3 caracteres')
+
     .refine((value) => /^\d+$/.test(value), {
       message: 'Somente números são permitidos neste campo',
     }),
@@ -28,13 +30,17 @@ const formValidationSchema = z.object({
 type FormData = z.infer<typeof formValidationSchema>
 
 export default function Form() {
-  const { handleFetchApi } = useContext(EcommerceContext)
+  const [differentButton, setDifferentButton] = useState(false)
+  const { handleFetchEcommerceApi } = useContext(EcommerceContext)
+
+  console.log(differentButton)
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+
+    formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(formValidationSchema),
   })
@@ -58,25 +64,55 @@ export default function Form() {
       dataForm.price,
     )
 
+    if (differentButton) {
+      const response = await api.post(`/products`, inforProduct)
+      const data = await response.data
+      console.log('entrei')
+
+      console.log(data)
+
+      handleFetchEcommerceApi()
+      reset()
+      return
+    }
+
     const response = await api.put(`/products/${dataForm.id}`, inforProduct)
     const data = await response.data
 
-    handleFetchApi()
+    handleFetchEcommerceApi()
     reset()
   }
 
   return (
     <FormContainer onSubmit={handleSubmit(handleSubmitForm)}>
-      <h5>Editar produto</h5>
-      <Input type="text" placeholder="Identificador 'id'" {...register('id')} />
-      <span>{errors.id?.message}</span>
+      <h5>{differentButton ? 'Adicionar produto' : 'Editar produto'}</h5>
+      <Input
+        type="text"
+        placeholder={`${
+          differentButton ? 'Não deixe esse campo vázio' : "Identificador 'id'"
+        } `}
+        {...register('id')}
+      />
+      {differentButton ? (
+        <span style={{ color: '#000' }}>campo não utilizado no momento</span>
+      ) : (
+        <span>{errors.id?.message}</span>
+      )}
       <Input type="text" placeholder="Titulo" {...register('title')} />
       <span>{errors.title?.message}</span>
       <Input type="text" placeholder="Descrição" {...register('description')} />
       <span>{errors.description?.message}</span>
       <Input type="text" placeholder="Preço" {...register('price')} />
       <span>{errors.price?.message}</span>
-      <Button type="submit">Mudar</Button>
+      <Button disabled={isSubmitting} type="submit">
+        {differentButton ? 'Adicionar' : 'Mudar'}
+      </Button>
+      <RefreshButton
+        type="button"
+        onClick={() => setDifferentButton(!differentButton)}
+      >
+        <RefreshCw />
+      </RefreshButton>
     </FormContainer>
   )
 }
